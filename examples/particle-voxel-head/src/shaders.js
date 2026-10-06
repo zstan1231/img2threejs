@@ -77,6 +77,7 @@ uniform float uIdle;
 uniform float uIdleDrift;
 uniform float uIdleSpeed;
 uniform float uDissolve;
+uniform float uAmbient;
 
 layout(location = 0) out vec4 outPos;   // xyz cube centre, w dissolve amount
 layout(location = 1) out vec4 outAttr;  // ao, baked key light, cube scale, albedo
@@ -213,9 +214,23 @@ void main() {
   pos.xy += (drift + loop * 3.0) * td * uIdleDrift * uMotion * uIdle;
   pos.z += sin(clockIdle * 0.7 + seed.z * TAU) * 0.04 * td * uIdleDrift * uMotion * uIdle;
 
+  // Ambient life (uAmbient): the head never stops shedding. Each free cube streams out
+  // along its own lane and rises a little, fading out at the far end and back in near
+  // the head, so the loop has no visible seam. A slow two-octave curl current carries
+  // the whole cloud on top of that.
+  float free = smoothstep(0.85, 1.0, td) * uAmbient * uMotion;
+  vec3 lane = normalize(vec3(scatter.x, scatter.y * 0.35 + 0.3, scatter.z * 0.5) + (seed.xyz - 0.5) * 0.6);
+  float life = fract(seed.z + uTime * (0.02 + 0.03 * seed.x));
+  pos += lane * life * (0.25 + 0.45 * seed.w) * free;
+  float fade = mix(1.0, smoothstep(0.0, 0.12, life) * (1.0 - smoothstep(0.75, 1.0, life)), free);
+  vec2 current = curl(pos.xy * 0.55 + vec2(uTime * 0.03, uTime * 0.02)) * 0.07
+    + curl(pos.xy * 1.6 - vec2(0.0, uTime * 0.06)) * 0.02;
+  pos.xy += current * td * uAmbient * uMotion;
+  pos.z += (vnoise(pos.xy * 0.8 + uTime * 0.05) - 0.5) * 0.12 * td * uAmbient * uMotion;
+
   vec4 attr = mix(aa, ab, m.t);
   float restScale = attr.b;
-  float driftScale = mix(sa.w, sb.w, m.t);
+  float driftScale = mix(sa.w, sb.w, m.t) * fade;
   outPos = vec4(pos, td);
   outAttr = vec4(mix(attr.r, 1.0, td), mix(attr.g, 0.85, td), mix(restScale, driftScale, td), attr.a);
 }

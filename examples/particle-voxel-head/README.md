@@ -37,17 +37,17 @@ Controls:
 - Drag to orbit; double-click to reset the view.
 - Move the pointer to push cubes; they spring back.
 - The panel picks a head (five presets, or a seeded random face).
-- Sliders set the dissolve amount and the rig uniforms (`uChaos`, `uDispersion`, `uMotion`, `uGlow`) plus depth of field.
+- Sliders set the dissolve amount, the ambient life of the free cloud (`uAmbient`), the rig uniforms (`uChaos`, `uDispersion`, `uMotion`, `uGlow`) and depth of field.
 - With "cycle heads" on, the page morphs through the heads every 12 s, passing through the curl field.
 
 ## How it is built
 
 | Stage | File | What it does |
 | --- | --- | --- |
-| Head SDF | `src/heads.js` | Smooth-unioned ellipsoids and capsules: cranium, face, jaw, cheekbones, brow, carved sockets with closed lids, nose bridge, tip and alae, lips, ears, neck. All presets and random faces are parameter sets over one field. |
+| Head SDF | `src/heads.js` | Smooth-unioned ellipsoids and capsules: cranium, face, jaw, cheekbones, brow, carved sockets with closed lids, nose bridge, tip and alae, lips wrapped around the dental arch (cupid's bow, philtrum, an upper lip overhanging a set-back lower lip so the closed mouth reads at 2–3 cubes tall), ears, neck. All presets and random faces are parameter sets over one field. |
 | Pin-art sampling | `src/heads.js` | Rays on a regular lattice along ±x, ±y, ±z. The front lattice owns every front-visible surface, so the face is one uninterrupted grid of columns with continuous depth, plus random recesses. AO and a soft-shadowed surface diffuse term are baked per cube. Runs in a Web Worker (~1 s per head), or on the main thread from `file://`. |
 | Cell layout | `src/heads.js` | Cubes are Morton-ordered so a morph maps forehead to forehead. They are spread over the 224×224 particle cells; the free cells become the cloud. Each cube gets a scatter target outward and sideways from its surface. |
-| 1a morph | `MORPH_FRAG` | The rig's `morphAt` (head A → head B, curl advection, bow, orbit, idle drift), extended to 3D, followed by a second staged transition: dissolve into the cloud. |
+| 1a morph | `MORPH_FRAG` | The rig's `morphAt` (head A → head B, curl advection, bow, orbit, idle drift), extended to 3D, followed by a second staged transition: dissolve into the cloud. Free cubes then stream out along their own lanes, rising and fading at the far end, on a slow two-octave curl current (`uAmbient`), while pinned cubes hold still. |
 | 1b spring | `SIM_FRAG` | The rig's pointer spring integrator, unchanged apart from reading the morph result. |
 | 2 cubes | `CUBE_VERT/FRAG` | One instanced box per cell. Pinned cubes stay axis-aligned; released ones tumble. Hemisphere ambient × AO + baked key, with a bevel darkening at the edges. |
 | 3 lens | `COC_FRAG`, `BLUR_FRAG` | A CoC-weighted copy of the frame, blurred with the rig's 5-tap separable blur at half and quarter resolution. |
@@ -57,7 +57,7 @@ Controls:
 
 - **Verbatim:** `hash4`, `vnoise`, `curl`, the quad vertex shader, the blur, and the spring integrator.
 - **`morphAt`:** works on `vec3` cube positions. Curl advection stays in the screen plane; depth rides along and swells mid-flight. The `depth` peel input is the baked surface "forwardness" rather than image luminance. Idle drift applies mid-morph only, so a resting face holds still.
-- **New:** the dissolve stage, the CoC pre-pass, the depth-of-field composite, and the cube shaders.
+- **New:** the dissolve stage, the ambient stream and current, the CoC pre-pass, the depth-of-field composite, and the cube shaders.
 
 ## Review evidence and its limits
 

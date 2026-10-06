@@ -1,22 +1,22 @@
 {
-  "referenceAreaFraction": 0.9986666666666667,
+  "referenceAreaFraction": 0.999600925925926,
   "angles": [
     {
       "path": "examples/particle-voxel-head/evidence/orbit-plus35.jpg",
-      "areaFraction": 0.9981064814814815,
-      "ratio": 0.9994390669040202,
+      "areaFraction": 0.9998361111111111,
+      "ratio": 1.0002352790789657,
       "degenerate": false
     },
     {
       "path": "examples/particle-voxel-head/evidence/orbit-minus35.jpg",
-      "areaFraction": 0.9994935185185185,
-      "ratio": 1.000827955792909,
+      "areaFraction": 0.9996101851851852,
+      "ratio": 1.0000092629558648,
       "degenerate": false
     },
     {
       "path": "examples/particle-voxel-head/evidence/profile-intact.jpg",
-      "areaFraction": 0.9993796296296297,
-      "ratio": 1.0007139148494288,
+      "areaFraction": 0.9995009259259259,
+      "ratio": 0.9998999600766602,
       "degenerate": false
     }
   ],

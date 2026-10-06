@@ -147,11 +147,25 @@ export function makeHeadSDF(P) {
       P.noseW * 0.55, P.noseW * 0.7), 0.08);
     d = smax(d, -sdEllipsoid(x, y - (P.noseTipY - 0.17), z - 0.84, 0.03, 0.07, 0.05), 0.04);
 
-    // Lips and the mouth line between them.
-    d = smin(d, sdEllipsoid(x, y - (P.mouthY + 0.04), z - 0.69, P.mouthW, P.lip, 0.1), 0.1);
-    d = smin(d, sdEllipsoid(x, y - (P.mouthY - 0.06), z - 0.68, P.mouthW * 0.88, P.lip * 1.1, 0.1), 0.1);
-    d = smax(d, -sdEllipsoid(x, y - P.mouthY, z - 0.79, P.mouthW * 0.85, 0.008, 0.05), 0.015);
-
+    // Lips wrap around the dental arch: depth falls off with x², so the corners tuck
+    // back into the cheeks instead of the mouth reading as a flat slab (which, lit
+    // from above, looked like a grin).
+    const u = x / P.mouthW;
+    const zl = z + 0.55 * x * x;
+    // Upper lip with a cupid's bow dip at the centre, under a shallow philtrum groove.
+    // It overhangs the lower lip: at this lattice pitch (lips are 2-3 cubes tall) the
+    // mouth reads through that depth step, not through a hairline carve.
+    const bow = 0.012 * Math.exp(-u * u * 40);
+    d = smin(d, sdEllipsoid(x, y - (P.mouthY + 0.035 - bow), zl - 0.685, P.mouthW * 0.92, P.lip * 0.85, 0.085), 0.09);
+    d = smax(d, -sdEllipsoid(x, y - (P.mouthY + 0.11), z - 0.80, 0.022, 0.055, 0.03), 0.03);
+    // Lower lip: short and set back, so the shadow under it stays a small pad rather
+    // than a long upturned curve (which read as a smile).
+    d = smin(d, sdEllipsoid(x, y - (P.mouthY - 0.055), zl - 0.635, P.mouthW * 0.6, P.lip * 0.95, 0.08), 0.1);
+    // Mouth line: closed and neutral, half a cube tall so the lattice resolves it,
+    // fading out before the corners.
+    d = smax(d, -sdEllipsoid(x, y - (P.mouthY + 0.004 * u * u), zl - 0.765, P.mouthW * 0.82, 0.012, 0.06), 0.012);
+    // Corners tuck in with a small dimple each side.
+    d = smax(d, -sdEllipsoid(ax - P.mouthW * 0.9, y - P.mouthY, zl - 0.72, 0.03, 0.025, 0.05), 0.03);
     return d;
   }
 }

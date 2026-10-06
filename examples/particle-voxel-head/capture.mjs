@@ -27,6 +27,7 @@ const only = arg('--only', '');
 
 const VIEWS = [
   { id: 'hero', azimuthDegrees: 0, elevationDegrees: 0, state: { time: 6, dissolve: 0.40 } },
+  { id: 'hero-t9', azimuthDegrees: 0, elevationDegrees: 0, state: { time: 9, dissolve: 0.40 } },
   { id: 'orbit-plus35', azimuthDegrees: 35, elevationDegrees: 0, state: { time: 6, dissolve: 0.40 } },
   { id: 'orbit-minus35', azimuthDegrees: -35, elevationDegrees: 5, state: { time: 6, dissolve: 0.40 } },
   { id: 'profile-intact', azimuthDegrees: 80, elevationDegrees: 0, state: { time: 6, dissolve: 0.0 } },

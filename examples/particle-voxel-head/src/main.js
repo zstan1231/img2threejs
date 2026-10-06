@@ -126,7 +126,7 @@ const morphU = {
   uProgress: { value: 0 }, uTime: { value: 0 },
   uDispersion: { value: 0.7 }, uChaos: { value: 0.55 }, uMotion: { value: 1 },
   uIdle: { value: 1 }, uIdleDrift: { value: 1 }, uIdleSpeed: { value: 0.6 },
-  uDissolve: { value: 0.40 },
+  uDissolve: { value: 0.40 }, uAmbient: { value: 0.7 },
 };
 const morphPass = pass(MORPH_FRAG, morphU);
 const simU = {
@@ -258,10 +258,10 @@ function finishMorph() {
 
 // ------------------------------------------------------------------ UI
 const ui = {
-  dissolve: $('dissolve'), chaos: $('chaos'), disp: $('disp'), mot: $('mot'), glow: $('glow'), dof: $('dof'),
+  dissolve: $('dissolve'), ambient: $('ambient'), chaos: $('chaos'), disp: $('disp'), mot: $('mot'), glow: $('glow'), dof: $('dof'),
   breathe: $('breathe'), cycle: $('cycle'),
 };
-const outIds = { dissolve: 'vDs', chaos: 'vC', disp: 'vD', mot: 'vM', glow: 'vG', dof: 'vF' };
+const outIds = { dissolve: 'vDs', ambient: 'vA', chaos: 'vC', disp: 'vD', mot: 'vM', glow: 'vG', dof: 'vF' };
 function syncUI() { for (const k in outIds) $(outIds[k]).textContent = (+ui[k].value).toFixed(2); }
 for (const k in outIds) ui[k].addEventListener('input', () => { if (k === 'dissolve') ui.breathe.checked = false; syncUI(); });
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) { ui.breathe.checked = false; ui.cycle.checked = false; }
@@ -338,6 +338,7 @@ function frame(now) {
   morphU.uTime.value = clock;
   morphU.uDissolve.value = Math.min(1, +ui.dissolve.value + lift);
   morphU.uChaos.value = +ui.chaos.value;
+  morphU.uAmbient.value = +ui.ambient.value;
   morphU.uDispersion.value = +ui.disp.value;
   morphU.uMotion.value = +ui.mot.value;
   cubeU.uTime.value = clock;
@@ -409,12 +410,13 @@ const waitFrames = (n) => new Promise((resolve) => {
   requestAnimationFrame(tick);
 });
 window.__IMG2THREEJS_CAPTURE__ = {
-  async setState({ time = 6, dissolve, preset, chaos, dof } = {}) {
+  async setState({ time = 6, dissolve, preset, chaos, dof, ambient } = {}) {
     ui.breathe.checked = false; ui.cycle.checked = false;
     document.body.classList.add('capture'); // review frames show the render only
     frozen = { time };
     if (dissolve !== undefined) ui.dissolve.value = dissolve;
     if (chaos !== undefined) ui.chaos.value = chaos;
+    if (ambient !== undefined) ui.ambient.value = ambient;
     if (dof !== undefined) ui.dof.value = dof;
     syncUI();
     if (preset && preset !== currentKey) {

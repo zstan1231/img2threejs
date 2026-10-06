@@ -20,9 +20,20 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/hero.jpg"
+    },
+    {
+      "id": "hero-t9",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26042
+      },
+      "path": "evidence/hero-t9.jpg"
     },
     {
       "id": "orbit-plus35",
@@ -31,7 +42,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/orbit-plus35.jpg"
     },
@@ -42,7 +53,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/orbit-minus35.jpg"
     },
@@ -53,7 +64,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/profile-intact.jpg"
     },
@@ -64,7 +75,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/hero-intact.jpg"
     },
@@ -75,7 +86,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26116
+        "voxels": 26042
       },
       "path": "evidence/hero-scattered.jpg"
     },
@@ -86,7 +97,7 @@
       "state": {
         "ok": true,
         "preset": "broad",
-        "voxels": 28590
+        "voxels": 28538
       },
       "path": "evidence/preset-broad.jpg"
     },
@@ -97,7 +108,7 @@
       "state": {
         "ok": true,
         "preset": "slender",
-        "voxels": 24624
+        "voxels": 24558
       },
       "path": "evidence/preset-slender.jpg"
     },
@@ -108,7 +119,7 @@
       "state": {
         "ok": true,
         "preset": "elder",
-        "voxels": 26500
+        "voxels": 26426
       },
       "path": "evidence/preset-elder.jpg"
     },
@@ -119,7 +130,7 @@
       "state": {
         "ok": true,
         "preset": "child",
-        "voxels": 26014
+        "voxels": 25962
       },
       "path": "evidence/preset-child.jpg"
     }
