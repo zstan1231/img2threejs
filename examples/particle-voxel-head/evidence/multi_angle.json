@@ -1,0 +1,26 @@
+{
+  "referenceAreaFraction": 0.9986666666666667,
+  "angles": [
+    {
+      "path": "examples/particle-voxel-head/evidence/orbit-plus35.jpg",
+      "areaFraction": 0.9981064814814815,
+      "ratio": 0.9994390669040202,
+      "degenerate": false
+    },
+    {
+      "path": "examples/particle-voxel-head/evidence/orbit-minus35.jpg",
+      "areaFraction": 0.9994935185185185,
+      "ratio": 1.000827955792909,
+      "degenerate": false
+    },
+    {
+      "path": "examples/particle-voxel-head/evidence/profile-intact.jpg",
+      "areaFraction": 0.9993796296296297,
+      "ratio": 1.0007139148494288,
+      "degenerate": false
+    }
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "deterministic; zero token; a flat-plane-faking-a-volume collapses in silhouette area when orbited"
+}

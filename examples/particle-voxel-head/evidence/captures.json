@@ -1,0 +1,128 @@
+{
+  "url": "particle-voxel-head.offline.html (built by build_offline.mjs, served locally)",
+  "viewport": [
+    1200,
+    900
+  ],
+  "gl": {
+    "canvas": [
+      1200,
+      900
+    ],
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "errors": [],
+  "records": [
+    {
+      "id": "hero",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/hero.jpg"
+    },
+    {
+      "id": "orbit-plus35",
+      "azimuthDegrees": 35,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/orbit-plus35.jpg"
+    },
+    {
+      "id": "orbit-minus35",
+      "azimuthDegrees": -35,
+      "elevationDegrees": 5,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/orbit-minus35.jpg"
+    },
+    {
+      "id": "profile-intact",
+      "azimuthDegrees": 80,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/profile-intact.jpg"
+    },
+    {
+      "id": "hero-intact",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/hero-intact.jpg"
+    },
+    {
+      "id": "hero-scattered",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26116
+      },
+      "path": "evidence/hero-scattered.jpg"
+    },
+    {
+      "id": "preset-broad",
+      "azimuthDegrees": 20,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "broad",
+        "voxels": 28590
+      },
+      "path": "evidence/preset-broad.jpg"
+    },
+    {
+      "id": "preset-slender",
+      "azimuthDegrees": -20,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "slender",
+        "voxels": 24624
+      },
+      "path": "evidence/preset-slender.jpg"
+    },
+    {
+      "id": "preset-elder",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "elder",
+        "voxels": 26500
+      },
+      "path": "evidence/preset-elder.jpg"
+    },
+    {
+      "id": "preset-child",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "child",
+        "voxels": 26014
+      },
+      "path": "evidence/preset-child.jpg"
+    }
+  ],
+  "note": "Saved as JPEG q90 from the PNG captures to keep the repository small."
+}

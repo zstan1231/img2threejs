@@ -5,6 +5,15 @@ All notable changes to **img2threejs** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Add `examples/particle-voxel-head/`: a stylized, code-only recreation of a dissolving voxel-head
+  design. The head is a procedural SDF sampled into pin-art cubes, driven by the Particle Morph
+  Rig's shaders ported to Three.js `RawShaderMaterial`. It ships five head presets plus seeded
+  random faces, an offline single-file build, and a capture script for the
+  `__IMG2THREEJS_CAPTURE__` contract. Example only; no skill, gate, or schema behavior changes.
+
 ## [1.4.4-beta.2]
 
 ### Added

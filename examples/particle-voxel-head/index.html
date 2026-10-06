@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Particle Voxel Head</title>
+<link rel="icon" href="data:,">
+<!-- Development entry. build_offline.mjs inlines Three.js and the sources into one file. -->
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js" } }
+</script>
+<style>
+:root{
+  --ground:#203039;
+  --panel:rgba(16,24,30,.72);
+  --line:rgba(170,195,215,.16);
+  --line-strong:rgba(170,195,215,.30);
+  --text:#dfe6ec;
+  --muted:#8597a4;
+  --dim:#5f7180;
+  --accent:#9cc4e4;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--ground);color:var(--text);
+  font:12px/1.5 var(--mono)}
+#stage canvas{position:fixed;inset:0;display:block;touch-action:none;cursor:grab}
+#stage canvas:active{cursor:grabbing}
+
+.masthead{position:fixed;left:0;right:0;top:0;z-index:3;display:flex;align-items:baseline;gap:14px;
+  padding:14px 18px;pointer-events:none}
+.masthead h1{margin:0;font-weight:600;font-size:14px;letter-spacing:.04em}
+.masthead p{margin:0;color:var(--dim);font-size:11px}
+#status{color:var(--accent)}
+
+.rig{position:fixed;left:18px;top:56px;z-index:3;width:236px;display:flex;flex-direction:column;
+  background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:4px}
+.group{display:flex;flex-direction:column;gap:9px;padding:12px 14px}
+.group + .group{border-top:1px solid var(--line)}
+.group > h2{margin:0;font-weight:600;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ctl .u{color:var(--muted);font-size:11.5px}
+.ctl .v{font-size:11.5px;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line-strong);
+  border-radius:2px;outline:none;margin:3px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;
+  background:var(--accent);border:0;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:var(--accent);border:0;cursor:pointer}
+input[type=range]:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.pick{display:flex;gap:6px}
+select,button{font:inherit;color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-strong);
+  border-radius:3px;padding:4px 6px}
+select{flex:1;min-width:0}
+button{cursor:pointer}
+button:hover,select:hover{border-color:var(--accent)}
+.toggle{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer}
+.toggle input{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
+.legend{position:fixed;right:18px;bottom:18px;z-index:3;max-width:250px;text-align:right;color:var(--dim);
+  font-size:10.5px;line-height:1.65;pointer-events:none}
+.legend b{color:var(--muted);font-weight:500}
+.capture .rig,.capture .legend,.capture .masthead{display:none}
+@media (max-width:720px){ .rig{width:calc(100% - 36px)} .legend{display:none} }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<header class="masthead">
+  <h1>Particle Voxel Head</h1>
+  <p>procedural pin-art head &middot; 50,176 cubes &middot; morph-rig shaders <span id="status"></span></p>
+</header>
+
+<div class="rig">
+  <div class="group">
+    <h2>Head</h2>
+    <div class="pick"><select id="preset" aria-label="Head preset"></select><button id="reroll" title="New random face">&#x21bb;</button></div>
+    <label class="toggle"><input id="cycle" type="checkbox" checked>cycle heads</label>
+  </div>
+  <div class="group">
+    <h2>Dissolve</h2>
+    <div class="ctl">
+      <div class="row"><span class="u">uDissolve</span><span class="v" id="vDs">0.40</span></div>
+      <input id="dissolve" type="range" min="0" max="1" step="0.001" value="0.40" aria-label="uDissolve">
+    </div>
+    <label class="toggle"><input id="breathe" type="checkbox" checked>breathe</label>
+  </div>
+  <div class="group">
+    <h2>Field</h2>
+    <div class="ctl">
+      <div class="row"><span class="u">uChaos</span><span class="v" id="vC">0.55</span></div>
+      <input id="chaos" type="range" min="0" max="1" step="0.01" value="0.55" aria-label="uChaos">
+    </div>
+    <div class="ctl">
+      <div class="row"><span class="u">uDispersion</span><span class="v" id="vD">0.70</span></div>
+      <input id="disp" type="range" min="0" max="1" step="0.01" value="0.70" aria-label="uDispersion">
+    </div>
+    <div class="ctl">
+      <div class="row"><span class="u">uMotion</span><span class="v" id="vM">1.00</span></div>
+      <input id="mot" type="range" min="0" max="1" step="0.01" value="1" aria-label="uMotion">
+    </div>
+  </div>
+  <div class="group">
+    <h2>Lens</h2>
+    <div class="ctl">
+      <div class="row"><span class="u">depth of field</span><span class="v" id="vF">1.00</span></div>
+      <input id="dof" type="range" min="0" max="1" step="0.01" value="1" aria-label="Depth of field">
+    </div>
+    <div class="ctl">
+      <div class="row"><span class="u">uGlow</span><span class="v" id="vG">0.22</span></div>
+      <input id="glow" type="range" min="0" max="2" step="0.01" value="0.22" aria-label="uGlow">
+    </div>
+  </div>
+</div>
+
+<p class="legend">
+  Drag to orbit, double-click to reset. Move the pointer to push cubes; they spring back.<br>
+  Every head is a signed distance field sampled into cubes: <b>no meshes, no textures</b>.
+</p>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
