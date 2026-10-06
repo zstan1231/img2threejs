@@ -48,6 +48,22 @@ function smin(a, b, k) {
 }
 function smax(a, b, k) { return -smin(-a, -b, k); }
 
+// 3D value noise for low-frequency surface irregularity.
+function hash3(i, j, k) {
+  const h = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453;
+  return h - Math.floor(h);
+}
+function vnoise3(x, y, z) {
+  const i = Math.floor(x), j = Math.floor(y), k = Math.floor(z);
+  let fx = x - i, fy = y - j, fz = z - k;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); fz = fz * fz * (3 - 2 * fz);
+  const l = (a, b, t) => a + (b - a) * t;
+  return l(
+    l(l(hash3(i, j, k), hash3(i + 1, j, k), fx), l(hash3(i, j + 1, k), hash3(i + 1, j + 1, k), fx), fy),
+    l(l(hash3(i, j, k + 1), hash3(i + 1, j, k + 1), fx), l(hash3(i, j + 1, k + 1), hash3(i + 1, j + 1, k + 1), fx), fy),
+    fz);
+}
+
 // ---------------------------------------------------------------- head parameters
 // World units: crown at y≈1.15, chin at y≈-1.15, face front at z≈0.8, +z toward camera.
 // The reference proportions (eyes ~40% down from the crown, nose base ~63%, mouth ~77%)
@@ -66,6 +82,11 @@ export const BASE = {
   mouthY: -0.68, mouthW: 0.22, lip: 0.06,
   ear: 0.24, earY: 0.06,
   neckR: 0.47, neckZ: -0.14,
+  // Anatomy that keeps a head from reading as a smooth CG primitive.
+  fold: 1.0,     // nasolabial fold depth
+  temple: 1.0,   // temporal hollow depth
+  asym: 1.0,     // left/right asymmetry (eyes, brows, mouth corners, nose tip)
+  organic: 1.0,  // low-frequency surface irregularity
 };
 
 export const PRESETS = {
@@ -75,11 +96,12 @@ export const PRESETS = {
   slender: { label: 'Slender head', width: 0.88, height: 1.06, jawW: 0.36, chinY: -1.14, chinR: 0.22, cheek: 0.2,
     noseTipY: -0.3, noseTipZ: 0.98, noseW: 0.1, mouthW: 0.2, lip: 0.065, neckR: 0.40 },
   elder: { label: 'Elder head', cranium: [0.82, 0.82, 0.92], brow: 0.18, socket: 0.22, cheek: 0.19, cheekZ: 0.36,
-    noseTipY: -0.34, noseTipZ: 0.96, noseW: 0.12, lip: 0.05, mouthY: -0.72, chinR: 0.25, ear: 0.30 },
+    noseTipY: -0.34, noseTipZ: 0.96, noseW: 0.12, lip: 0.05, mouthY: -0.72, chinR: 0.25, ear: 0.30,
+    fold: 1.8, temple: 1.5, asym: 1.4, organic: 1.4 },
   child: { label: 'Child head', width: 1.04, height: 0.92, cranium: [0.86, 0.92, 0.94], craniumY: 0.42,
     face: [0.6, 0.76, 0.62], faceY: -0.28, jawW: 0.36, chinY: -0.90, chinR: 0.24, eyeY: 0.12, browY: 0.24,
     brow: 0.08, socket: 0.13, noseTopY: 0.08, noseTipY: -0.26, noseTipZ: 0.84, noseW: 0.095, mouthY: -0.56,
-    mouthW: 0.18, lip: 0.08, cheek: 0.27, cheekZ: 0.40, neckR: 0.38 },
+    mouthW: 0.18, lip: 0.08, cheek: 0.27, cheekZ: 0.40, neckR: 0.38, fold: 0.3, temple: 0.35, organic: 0.5 },
 };
 
 export function resolveParams(name, overrides) {
@@ -102,6 +124,7 @@ export function randomParams(seed) {
     noseTipY: j(BASE.noseTipY, 0.15), noseTipZ: j(BASE.noseTipZ, 0.06), noseW: j(BASE.noseW, 0.25),
     mouthY: j(BASE.mouthY, 0.06), mouthW: j(BASE.mouthW, 0.15), lip: j(BASE.lip, 0.3),
     ear: j(BASE.ear, 0.2), neckR: j(BASE.neckR, 0.15),
+    fold: j(1, 0.5), temple: j(1, 0.4), asym: j(1, 0.5),
   };
 }
 
@@ -122,22 +145,43 @@ export function makeHeadSDF(P) {
     d = smin(d, sdEllipsoid(x, y - P.chinY, z - P.chinZ, P.jawW, P.chinR, P.chinR * 1.25), 0.36);
     d = smin(d, sdEllipsoid(ax - P.cheekX, y - P.cheekY, z - P.cheekZ, P.cheek, P.cheek * 0.8, P.cheek * 0.85), 0.2);
 
+    // Bone planes: the cheekbone ridge running back toward the ear, the corners of the
+    // jaw, and hollow temples. Without them the skull is an egg.
+    d = smin(d, sdEllipsoid(ax - 0.5, y + 0.02, z - 0.34, 0.2, 0.055, 0.12), 0.06);
+    d = smin(d, sdEllipsoid(ax - (P.jawW + 0.02), y + 0.82, z + 0.05, 0.1, 0.16, 0.2), 0.12);
+    d = smax(d, -sdEllipsoid(ax - 0.8, y - 0.28, z - 0.28, 0.08 * P.temple + 0.001, 0.15, 0.13), 0.12);
+
     // Facial features only influence the front of the head; skipping them elsewhere
     // halves the cost of the march without changing the field (their reach ends inside
     // this box, smooth-blend radius included).
-    if (z > 0.25 && ax < 0.75 && y < 0.65 && y > -1.0) d = face(d, x, ax, y, z);
+    if (z > 0.25 && ax < 0.75 && y < 0.65 && y > -1.25) d = face(d, x, ax, y, z);
     if (ax > 0.55) d = smin(d, sdEllipsoid(ax - 0.80, y - P.earY, z + 0.06, 0.07, P.ear, P.ear * 0.55), 0.06);
     d = smin(d, sdCapsule(x, y, z, 0, -0.55, P.neckZ, 0, -2.6, P.neckZ + 0.02, P.neckR, P.neckR * 1.08), 0.3);
+
+    // Low-frequency irregularity, only near the surface where it can matter: about
+    // half a cube of relief, enough to break up the perfectly smooth shading.
+    if (d < 0.05 && P.organic > 0) {
+      d += ((vnoise3(x * 5.5 + P.seed, y * 5.5, z * 5.5) - 0.5) * 0.014
+        + (vnoise3(x * 12, y * 12 + P.seed, z * 12) - 0.5) * 0.006) * P.organic;
+    }
 
     // The SDF is evaluated in scaled space; rescale so distances stay near-metric.
     return d * Math.min(P.width, P.height);
   }
 
   function face(d, x, ax, y, z) {
-    // Brow ridge and closed eyelids inside carved sockets.
-    d = smin(d, sdEllipsoid(x, y - P.browY, z - P.browZ, 0.56, P.brow, 0.2), 0.14);
-    d = smax(d, -sdEllipsoid(ax - P.eyeX, y - P.eyeY, z - 0.80, 0.19, 0.13, 0.2 * (P.socket / 0.17)), 0.10);
-    d = smin(d, sdEllipsoid(ax - P.eyeX, y - (P.eyeY - 0.005), z - 0.58, 0.14, 0.085, 0.13 * P.lid), 0.06);
+    // No face is symmetric: one side sits a little higher, seeded per head.
+    const side = (x < 0 ? 1 : -1) * (P.seed % 2 ? 1 : -1) * P.asym;
+    const eyeY = P.eyeY + side * 0.008;
+
+    // Brows: two ridges meeting at a lower glabella, not one bar.
+    d = smin(d, sdEllipsoid(ax - 0.25, y - (P.browY + side * 0.01), z - P.browZ, 0.27, P.brow, 0.18), 0.12);
+    d = smin(d, sdEllipsoid(x, y - (P.browY - 0.04), z - (P.browZ + 0.03), 0.08, 0.06, 0.08), 0.06);
+    // Closed eyelids inside carved sockets, with a crease above and a hollow below.
+    d = smax(d, -sdEllipsoid(ax - P.eyeX, y - eyeY, z - 0.80, 0.19, 0.13, 0.2 * (P.socket / 0.17)), 0.10);
+    d = smin(d, sdEllipsoid(ax - P.eyeX, y - (eyeY - 0.005), z - 0.58, 0.14, 0.085, 0.13 * P.lid), 0.06);
+    d = smax(d, -sdEllipsoid(ax - P.eyeX, y - (eyeY + 0.075), z - 0.66, 0.13, 0.012, 0.08), 0.02);
+    d = smax(d, -sdEllipsoid(ax - P.eyeX * 1.02, y - (eyeY - 0.15), z - 0.73, 0.12, 0.035, 0.07), 0.05);
 
     // Nose: bridge, tip, alar wings; philtrum groove below it.
     d = smin(d, sdCapsule(x, y, z, 0, P.noseTopY, 0.70, 0, P.noseTipY + 0.06, P.noseTipZ - 0.06,
@@ -146,6 +190,15 @@ export function makeHeadSDF(P) {
     d = smin(d, sdEllipsoid(ax - P.noseW * 0.95, y - (P.noseTipY - 0.02), z - (P.noseTipZ - 0.22), P.noseW * 0.7,
       P.noseW * 0.55, P.noseW * 0.7), 0.08);
     d = smax(d, -sdEllipsoid(x, y - (P.noseTipY - 0.17), z - 0.84, 0.03, 0.07, 0.05), 0.04);
+    // Nostrils under the tip.
+    d = smax(d, -sdEllipsoid(ax - 0.05, y - (P.noseTipY - 0.07), z - (P.noseTipZ - 0.13), 0.032, 0.02, 0.05), 0.02);
+
+    // Malar pads and the nasolabial folds that separate them from the mouth.
+    d = smin(d, sdEllipsoid(ax - 0.25, y + 0.42, z - 0.64, 0.11, 0.12, 0.08), 0.08);
+    if (P.fold > 0) {
+      d = smax(d, -sdCapsule(ax, y, z, P.noseW * 1.55, P.noseTipY - 0.02, 0.75,
+        P.mouthW * 1.05, P.mouthY - 0.03, 0.66, 0.012 * P.fold, 0.016 * P.fold), 0.035);
+    }
 
     // Lips wrap around the dental arch: depth falls off with x², so the corners tuck
     // back into the cheeks instead of the mouth reading as a flat slab (which, lit
@@ -164,8 +217,11 @@ export function makeHeadSDF(P) {
     // Mouth line: closed and neutral, half a cube tall so the lattice resolves it,
     // fading out before the corners.
     d = smax(d, -sdEllipsoid(x, y - (P.mouthY + 0.004 * u * u), zl - 0.765, P.mouthW * 0.82, 0.012, 0.06), 0.012);
-    // Corners tuck in with a small dimple each side.
-    d = smax(d, -sdEllipsoid(ax - P.mouthW * 0.9, y - P.mouthY, zl - 0.72, 0.03, 0.025, 0.05), 0.03);
+    // Corners tuck in with a small dimple each side, one a little higher.
+    d = smax(d, -sdEllipsoid(ax - P.mouthW * 0.9, y - (P.mouthY + side * 0.006), zl - 0.72, 0.03, 0.025, 0.05), 0.03);
+    // Chin pad under a shallow mentolabial groove.
+    d = smax(d, -sdEllipsoid(x, y - (P.mouthY - 0.17), zl - 0.7, P.mouthW * 0.55, 0.02, 0.04), 0.05);
+    d = smin(d, sdEllipsoid(x, y - (P.chinY + 0.1), z - (P.chinZ + P.chinR * 1.25 - 0.04), 0.13, 0.09, 0.06), 0.06);
     return d;
   }
 }
@@ -374,7 +430,9 @@ export function layoutCells(head, cells = CELLS) {
       peel *= 1 - 0.7 * Math.min(1, Math.max(0, (r - 0.5) / 0.55));
       peel *= 0.25 + 0.75 * Math.min(1, Math.max(0, (py + 1.75) / 0.75));
       home.set([px, py, pz, Math.min(1, Math.max(0, peel))], c * 4);
-      attr.set([anchor.ao, anchor.shadow, anchor.size, 0.92 + 0.08 * R()], c * 4);
+      // Tone speckle: most cubes near white, a few noticeably darker, as in the photo.
+      const tone = R() < 0.07 ? 0.66 + 0.14 * R() : 0.84 + 0.16 * R();
+      attr.set([anchor.ao, anchor.shadow, anchor.size, tone], c * 4);
     } else {
       home.set([sx, sy, sz, -1], c * 4); // -1: always a cloud particle in this head
       attr.set([1, 1, driftScale, 0.85 + 0.15 * R()], c * 4);

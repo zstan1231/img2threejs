@@ -4,13 +4,13 @@
     "silhouetteIoU": 0.9995,
     "aspectRatioDelta": 0.0,
     "scaleDelta": 0.0,
-    "bilateralSymmetryError": 0.0008
+    "bilateralSymmetryError": 0.001
   },
   "failures": [],
   "maskWarnings": [
     "reference: image is not clearly isolated from background; using most pixels as material evidence",
     "render: image is not clearly isolated from background; using most pixels as material evidence"
   ],
-  "renderHash": "935da65f74c0fb31",
+  "renderHash": "74c59899f0408abb",
   "passId": null
 }

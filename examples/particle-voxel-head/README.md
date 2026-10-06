@@ -35,7 +35,10 @@ node capture.mjs --modules /tmp/pw --url http://127.0.0.1:8000/particle-voxel-he
 
 Controls:
 - Drag to orbit; double-click to reset the view.
-- Move the pointer to push cubes; they spring back.
+- The head watches your pointer: it turns, unhurried, toward it (up to 24° yaw and 12° pitch), keeps watching for 2.5 s after you stop, then settles back. The first move after a quiet spell is noticed with a pulse of light from between the eyes.
+- Thought pulses: every 5–9 s a ring of light rolls across the face from the brow, a temple, the crown or the eyes, lifting the cubes it passes.
+- Move the pointer close to push cubes; they spring back.
+- *Presence* toggles turn attention and pulses off (pulses are off under reduced motion).
 - The panel picks a head (five presets, or a seeded random face).
 - Sliders set the dissolve amount, the ambient life of the free cloud (`uAmbient`), the rig uniforms (`uChaos`, `uDispersion`, `uMotion`, `uGlow`) and depth of field.
 - With "cycle heads" on, the page morphs through the heads every 12 s, passing through the curl field.
@@ -44,10 +47,10 @@ Controls:
 
 | Stage | File | What it does |
 | --- | --- | --- |
-| Head SDF | `src/heads.js` | Smooth-unioned ellipsoids and capsules: cranium, face, jaw, cheekbones, brow, carved sockets with closed lids, nose bridge, tip and alae, lips wrapped around the dental arch (cupid's bow, philtrum, an upper lip overhanging a set-back lower lip so the closed mouth reads at 2–3 cubes tall), ears, neck. All presets and random faces are parameter sets over one field. |
+| Head SDF | `src/heads.js` | Smooth-unioned ellipsoids and capsules: cranium, face, jaw with defined corners, cheekbone ridges, hollow temples, split brows over a lower glabella, carved sockets with closed lids, eyelid creases and under-eye hollows, nostrils, malar pads and nasolabial folds, a chin pad, nose bridge, tip and alae, lips wrapped around the dental arch (cupid's bow, philtrum, an upper lip overhanging a set-back lower lip so the closed mouth reads at 2–3 cubes tall), ears, neck. Seeded left/right asymmetry and low-frequency noise near the surface keep it from reading as a smooth CG primitive. All presets and random faces are parameter sets over one field. |
 | Pin-art sampling | `src/heads.js` | Rays on a regular lattice along ±x, ±y, ±z. The front lattice owns every front-visible surface, so the face is one uninterrupted grid of columns with continuous depth, plus random recesses. AO and a soft-shadowed surface diffuse term are baked per cube. Runs in a Web Worker (~1 s per head), or on the main thread from `file://`. |
 | Cell layout | `src/heads.js` | Cubes are Morton-ordered so a morph maps forehead to forehead. They are spread over the 224×224 particle cells; the free cells become the cloud. Each cube gets a scatter target outward and sideways from its surface. |
-| 1a morph | `MORPH_FRAG` | The rig's `morphAt` (head A → head B, curl advection, bow, orbit, idle drift), extended to 3D, followed by a second staged transition: dissolve into the cloud. Free cubes then stream out along their own lanes, rising and fading at the far end, on a slow two-octave curl current (`uAmbient`), while pinned cubes hold still. |
+| 1a morph | `MORPH_FRAG` | The rig's `morphAt` (head A → head B, curl advection, bow, orbit, idle drift), extended to 3D, followed by a second staged transition: dissolve into the cloud. Free cubes then stream out along their own lanes, rising and fading at the far end, on a slow two-octave curl current (`uAmbient`), while pinned cubes hold still. Thought pulses push and brighten pinned cubes in an expanding ring; the attention turn rotates everything about the neck, the free cloud only partly (`uLean`). |
 | 1b spring | `SIM_FRAG` | The rig's pointer spring integrator, unchanged apart from reading the morph result. |
 | 2 cubes | `CUBE_VERT/FRAG` | One instanced box per cell. Pinned cubes stay axis-aligned; released ones tumble. Hemisphere ambient × AO + baked key, with a bevel darkening at the edges. |
 | 3 lens | `COC_FRAG`, `BLUR_FRAG` | A CoC-weighted copy of the frame, blurred with the rig's 5-tap separable blur at half and quarter resolution. |
@@ -57,7 +60,7 @@ Controls:
 
 - **Verbatim:** `hash4`, `vnoise`, `curl`, the quad vertex shader, the blur, and the spring integrator.
 - **`morphAt`:** works on `vec3` cube positions. Curl advection stays in the screen plane; depth rides along and swells mid-flight. The `depth` peel input is the baked surface "forwardness" rather than image luminance. Idle drift applies mid-morph only, so a resting face holds still.
-- **New:** the dissolve stage, the ambient stream and current, the CoC pre-pass, the depth-of-field composite, and the cube shaders.
+- **New:** the dissolve stage, the ambient stream and current, attention and thought pulses, the CoC pre-pass, the depth-of-field composite, and the cube shaders.
 
 ## Review evidence and its limits
 

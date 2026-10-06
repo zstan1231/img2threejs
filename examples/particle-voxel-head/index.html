@@ -90,6 +90,11 @@ button:hover,select:hover{border-color:var(--accent)}
     </div>
   </div>
   <div class="group">
+    <h2>Presence</h2>
+    <label class="toggle"><input id="attention" type="checkbox" checked>attention (follows your pointer)</label>
+    <label class="toggle"><input id="pulses" type="checkbox" checked>thought pulses</label>
+  </div>
+  <div class="group">
     <h2>Field</h2>
     <div class="ctl">
       <div class="row"><span class="u">uChaos</span><span class="v" id="vC">0.55</span></div>
@@ -118,7 +123,8 @@ button:hover,select:hover{border-color:var(--accent)}
 </div>
 
 <p class="legend">
-  Drag to orbit, double-click to reset. Move the pointer to push cubes; they spring back.<br>
+  It watches your pointer. Move close to push cubes; they spring back.<br>
+  Drag to orbit, double-click to reset.<br>
   Every head is a signed distance field sampled into cubes: <b>no meshes, no textures</b>.
 </p>
 

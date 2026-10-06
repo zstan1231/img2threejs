@@ -78,11 +78,25 @@ uniform float uIdleDrift;
 uniform float uIdleSpeed;
 uniform float uDissolve;
 uniform float uAmbient;
+uniform mat3 uGaze;          // head rotation toward the viewer's attention
+uniform vec3 uGazePivot;     // top of the neck
+uniform float uLean;         // how much the free cloud follows the turn
+uniform vec4 uPulseA;        // thought pulses: xyz origin on the head, w age in s (<0 off)
+uniform vec4 uPulseB;
 
 layout(location = 0) out vec4 outPos;   // xyz cube centre, w dissolve amount
 layout(location = 1) out vec4 outAttr;  // ao, baked key light, cube scale, albedo
 
 ${COMMON}
+
+// A thought pulse: a ring of light that rolls outward over the head surface from its
+// origin, pushing the cubes it passes a little way out, then fading.
+float pulseAt(vec4 P, vec3 p) {
+  if (P.w < 0.0) return 0.0;
+  float r = length(p - P.xyz);
+  float band = exp(-pow((r - P.w * 0.8) / 0.08, 2.0));
+  return band * smoothstep(0.0, 0.15, P.w) * (1.0 - smoothstep(1.4, 3.0, P.w));
+}
 
 struct MorphSample {
   vec3 pos;
@@ -228,11 +242,20 @@ void main() {
   pos.xy += current * td * uAmbient * uMotion;
   pos.z += (vnoise(pos.xy * 0.8 + uTime * 0.05) - 0.5) * 0.12 * td * uAmbient * uMotion;
 
+  // Thought pulses ride the pinned surface only.
+  float pulse = (pulseAt(uPulseA, m.pos) + pulseAt(uPulseB, m.pos)) * (1.0 - td);
+  pos += normalize(m.pos - vec3(0.0, 0.1, -0.15)) * pulse * 0.024;
+
+  // Attention: the head turns about the neck; the free cloud leans after it.
+  vec3 turned = uGazePivot + uGaze * (pos - uGazePivot);
+  pos = mix(pos, turned, mix(1.0, uLean, td));
+
   vec4 attr = mix(aa, ab, m.t);
   float restScale = attr.b;
   float driftScale = mix(sa.w, sb.w, m.t) * fade;
   outPos = vec4(pos, td);
-  outAttr = vec4(mix(attr.r, 1.0, td), mix(attr.g, 0.85, td), mix(restScale, driftScale, td), attr.a);
+  outAttr = vec4(mix(attr.r, 1.0, td), mix(attr.g, 0.85, td), mix(restScale, driftScale, td),
+    attr.a * (1.0 + 0.9 * pulse));
 }
 `;
 

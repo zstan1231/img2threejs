@@ -20,7 +20,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/hero.jpg"
     },
@@ -31,9 +31,31 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/hero-t9.jpg"
+    },
+    {
+      "id": "attention",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26239
+      },
+      "path": "evidence/attention.jpg"
+    },
+    {
+      "id": "pulse",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "state": {
+        "ok": true,
+        "preset": "reference",
+        "voxels": 26239
+      },
+      "path": "evidence/pulse.jpg"
     },
     {
       "id": "orbit-plus35",
@@ -42,7 +64,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/orbit-plus35.jpg"
     },
@@ -53,7 +75,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/orbit-minus35.jpg"
     },
@@ -64,7 +86,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/profile-intact.jpg"
     },
@@ -75,7 +97,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/hero-intact.jpg"
     },
@@ -86,7 +108,7 @@
       "state": {
         "ok": true,
         "preset": "reference",
-        "voxels": 26042
+        "voxels": 26239
       },
       "path": "evidence/hero-scattered.jpg"
     },
@@ -97,7 +119,7 @@
       "state": {
         "ok": true,
         "preset": "broad",
-        "voxels": 28538
+        "voxels": 28792
       },
       "path": "evidence/preset-broad.jpg"
     },
@@ -108,7 +130,7 @@
       "state": {
         "ok": true,
         "preset": "slender",
-        "voxels": 24558
+        "voxels": 24575
       },
       "path": "evidence/preset-slender.jpg"
     },
@@ -119,7 +141,7 @@
       "state": {
         "ok": true,
         "preset": "elder",
-        "voxels": 26426
+        "voxels": 26652
       },
       "path": "evidence/preset-elder.jpg"
     },
@@ -130,7 +152,7 @@
       "state": {
         "ok": true,
         "preset": "child",
-        "voxels": 25962
+        "voxels": 26165
       },
       "path": "evidence/preset-child.jpg"
     }

@@ -127,6 +127,9 @@ const morphU = {
   uDispersion: { value: 0.7 }, uChaos: { value: 0.55 }, uMotion: { value: 1 },
   uIdle: { value: 1 }, uIdleDrift: { value: 1 }, uIdleSpeed: { value: 0.6 },
   uDissolve: { value: 0.40 }, uAmbient: { value: 0.7 },
+  uGaze: { value: new THREE.Matrix3() }, uGazePivot: { value: new THREE.Vector3(0, -0.85, -0.1) },
+  uLean: { value: 0.35 }, uPulseA: { value: new THREE.Vector4(0, 0, 0, -1) },
+  uPulseB: { value: new THREE.Vector4(0, 0, 0, -1) },
 };
 const morphPass = pass(MORPH_FRAG, morphU);
 const simU = {
@@ -258,13 +261,16 @@ function finishMorph() {
 
 // ------------------------------------------------------------------ UI
 const ui = {
-  dissolve: $('dissolve'), ambient: $('ambient'), chaos: $('chaos'), disp: $('disp'), mot: $('mot'), glow: $('glow'), dof: $('dof'),
+  dissolve: $('dissolve'), ambient: $('ambient'), chaos: $('chaos'),
+  attention: $('attention'), pulses: $('pulses'), disp: $('disp'), mot: $('mot'), glow: $('glow'), dof: $('dof'),
   breathe: $('breathe'), cycle: $('cycle'),
 };
 const outIds = { dissolve: 'vDs', ambient: 'vA', chaos: 'vC', disp: 'vD', mot: 'vM', glow: 'vG', dof: 'vF' };
 function syncUI() { for (const k in outIds) $(outIds[k]).textContent = (+ui[k].value).toFixed(2); }
 for (const k in outIds) ui[k].addEventListener('input', () => { if (k === 'dissolve') ui.breathe.checked = false; syncUI(); });
-if (matchMedia('(prefers-reduced-motion: reduce)').matches) { ui.breathe.checked = false; ui.cycle.checked = false; }
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  ui.breathe.checked = false; ui.cycle.checked = false; ui.pulses.checked = false;
+}
 syncUI();
 
 const presetSel = $('preset');
@@ -289,6 +295,7 @@ const canvas = renderer.domElement;
 canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, az: view.azGoal, el: view.elGoal }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointerup', () => { drag = null; });
 canvas.addEventListener('pointermove', (e) => {
+  noticeAttention(e.clientX / innerWidth * 2 - 1, 1 - e.clientY / innerHeight * 2);
   if (drag) {
     view.azGoal = drag.az - (e.clientX - drag.x) * 0.3;
     view.elGoal = THREE.MathUtils.clamp(drag.el + (e.clientY - drag.y) * 0.2, -35, 35);
@@ -298,7 +305,59 @@ canvas.addEventListener('pointermove', (e) => {
   plane.normal.set(Math.sin(THREE.MathUtils.degToRad(view.az)), 0, Math.cos(THREE.MathUtils.degToRad(view.az)));
   if (ray.ray.intersectPlane(plane, hit)) { ptr.x = hit.x; ptr.y = hit.y; ptr.active = 1; }
 });
-canvas.addEventListener('pointerleave', () => { ptr.active = 0; drag = null; });
+canvas.addEventListener('pointerleave', () => { ptr.active = 0; drag = null; gaze.lastSeen = -1e9; });
+
+// ------------------------------------------------------------------ presence
+// Attention: the head turns, unhurried, toward where the viewer's pointer is; it keeps
+// watching for a moment after the pointer stops, then settles back to centre. The first
+// movement after a quiet spell is noticed with a pulse from between the eyes.
+const gaze = { yaw: 0, pitch: 0, vyaw: 0, vpitch: 0, tyaw: 0, tpitch: 0, lastSeen: -1e9 };
+const MAX_YAW = 24, MAX_PITCH = 12, HOLD = 2.5;
+function noticeAttention(nx, ny) {
+  if (!ui.attention.checked || frozen) return;
+  if (clock - gaze.lastSeen > 4) firePulse([0, 0.22, 0.8]);
+  gaze.lastSeen = clock;
+  gaze.tyaw = THREE.MathUtils.clamp(nx, -1, 1) * MAX_YAW;
+  gaze.tpitch = -THREE.MathUtils.clamp(ny, -1, 1) * MAX_PITCH;
+}
+function springTo(x, v, target, dt, omega) {
+  // Critically damped spring: slow, deliberate, no overshoot.
+  const a = omega * omega * (target - x) - 2 * omega * v;
+  v += a * dt;
+  return [x + v * dt, v];
+}
+const gazeEuler = new THREE.Euler(), gazeMat4 = new THREE.Matrix4();
+function setGazeMatrix(yawDeg, pitchDeg) {
+  gazeEuler.set(THREE.MathUtils.degToRad(pitchDeg), THREE.MathUtils.degToRad(yawDeg), 0, 'YXZ');
+  morphU.uGaze.value.setFromMatrix4(gazeMat4.makeRotationFromEuler(gazeEuler));
+}
+
+// Thought pulses: a ring of light rolls over the face every few seconds, from places a
+// mind might start (brow, temples, crown, the eyes).
+const PULSE_ORIGINS = [[0, 0.62, 0.78], [0.62, 0.35, 0.45], [-0.62, 0.35, 0.45], [0, 1.1, 0.3], [0, 0.22, 0.8]];
+const pulses = [{ origin: [0, 0, 0], born: -1e9 }, { origin: [0, 0, 0], born: -1e9 }];
+let pulseSlot = 0, nextPulse = 3;
+function firePulse(origin) {
+  pulses[pulseSlot] = { origin, born: clock };
+  pulseSlot = 1 - pulseSlot;
+}
+function updatePresence(dt) {
+  if (!frozen) {
+    if (ui.attention.checked && clock - gaze.lastSeen > HOLD) { gaze.tyaw = 0; gaze.tpitch = 0; }
+    if (!ui.attention.checked) { gaze.tyaw = 0; gaze.tpitch = 0; }
+    [gaze.yaw, gaze.vyaw] = springTo(gaze.yaw, gaze.vyaw, gaze.tyaw, dt, 1.7);
+    [gaze.pitch, gaze.vpitch] = springTo(gaze.pitch, gaze.vpitch, gaze.tpitch, dt, 1.7);
+    if (ui.pulses.checked && clock > nextPulse) {
+      firePulse(PULSE_ORIGINS[Math.floor(Math.random() * PULSE_ORIGINS.length)]);
+      nextPulse = clock + 5 + Math.random() * 4;
+    }
+  }
+  setGazeMatrix(gaze.yaw, gaze.pitch);
+  for (const [i, u] of [[0, morphU.uPulseA], [1, morphU.uPulseB]]) {
+    const age = clock - pulses[i].born;
+    u.value.set(...pulses[i].origin, age >= 0 && age < 3.2 ? age : -1);
+  }
+}
 canvas.addEventListener('dblclick', () => { view.azGoal = 0; view.elGoal = 0; });
 
 // ------------------------------------------------------------------ frame
@@ -335,6 +394,7 @@ function frame(now) {
     if (p >= 1) finishMorph();
   }
 
+  updatePresence(dt);
   morphU.uTime.value = clock;
   morphU.uDissolve.value = Math.min(1, +ui.dissolve.value + lift);
   morphU.uChaos.value = +ui.chaos.value;
@@ -410,10 +470,14 @@ const waitFrames = (n) => new Promise((resolve) => {
   requestAnimationFrame(tick);
 });
 window.__IMG2THREEJS_CAPTURE__ = {
-  async setState({ time = 6, dissolve, preset, chaos, dof, ambient } = {}) {
+  // gaze: {yaw, pitch} in degrees; pulse: {origin: [x, y, z], age} in seconds.
+  async setState({ time = 6, dissolve, preset, chaos, dof, ambient, gaze: look, pulse } = {}) {
     ui.breathe.checked = false; ui.cycle.checked = false;
     document.body.classList.add('capture'); // review frames show the render only
     frozen = { time };
+    gaze.yaw = look?.yaw ?? 0; gaze.pitch = look?.pitch ?? 0; gaze.vyaw = gaze.vpitch = 0;
+    pulses[0] = pulse ? { origin: pulse.origin, born: time - pulse.age } : { origin: [0, 0, 0], born: -1e9 };
+    pulses[1] = { origin: [0, 0, 0], born: -1e9 };
     if (dissolve !== undefined) ui.dissolve.value = dissolve;
     if (chaos !== undefined) ui.chaos.value = chaos;
     if (ambient !== undefined) ui.ambient.value = ambient;
